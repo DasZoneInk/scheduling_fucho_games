@@ -1,0 +1,160 @@
+algorithm: cpsat
+status: OPTIMAL
+solve_time_s: 0.0484
+infeasibility_reason: null
+best_solution:
+  total_revenue: 1600
+  schedule:
+  - matchday: 1
+    date: '2022-01-01'
+    matches:
+    - match: Team 3 vs Team 6
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 100
+    - match: Team 1 vs Team 5
+      field: Field 1
+      time_slot: 22:00-23:00
+      revenue: 110
+    - match: Team 2 vs Team 4
+      field: Field 2
+      time_slot: 10:00-11:00
+      revenue: 110
+  - matchday: 2
+    date: '2022-01-08'
+    matches:
+    - match: Team 4 vs Team 5
+      field: Field 1
+      time_slot: 20:00-21:00
+      revenue: 100
+    - match: Team 1 vs Team 6
+      field: Field 1
+      time_slot: 22:00-23:00
+      revenue: 110
+    - match: Team 2 vs Team 3
+      field: Field 2
+      time_slot: 10:00-11:00
+      revenue: 110
+  - matchday: 3
+    date: '2022-01-15'
+    matches:
+    - match: Team 1 vs Team 3
+      field: Field 1
+      time_slot: 22:00-23:00
+      revenue: 110
+    - match: Team 4 vs Team 6
+      field: Field 2
+      time_slot: 09:00-10:00
+      revenue: 100
+    - match: Team 2 vs Team 5
+      field: Field 2
+      time_slot: 10:00-11:00
+      revenue: 110
+  - matchday: 4
+    date: '2022-01-22'
+    matches:
+    - match: Team 1 vs Team 4
+      field: Field 1
+      time_slot: 22:00-23:00
+      revenue: 110
+    - match: Team 3 vs Team 5
+      field: Field 2
+      time_slot: 09:00-10:00
+      revenue: 100
+    - match: Team 2 vs Team 6
+      field: Field 2
+      time_slot: 10:00-11:00
+      revenue: 110
+  - matchday: 5
+    date: '2022-01-29'
+    matches:
+    - match: Team 3 vs Team 4
+      field: Field 1
+      time_slot: 22:00-23:00
+      revenue: 110
+    - match: Team 5 vs Team 6
+      field: Field 2
+      time_slot: 09:00-10:00
+      revenue: 100
+    - match: Team 1 vs Team 2
+      field: Field 2
+      time_slot: 10:00-11:00
+      revenue: 110
+second_best_solution:
+  total_revenue: 1590
+  schedule:
+  - matchday: 1
+    date: '2022-01-01'
+    matches:
+    - match: Team 2 vs Team 6
+      field: Field 1
+      time_slot: 20:00-21:00
+      revenue: 100
+    - match: Team 4 vs Team 5
+      field: Field 1
+      time_slot: 22:00-23:00
+      revenue: 110
+    - match: Team 1 vs Team 3
+      field: Field 2
+      time_slot: 10:00-11:00
+      revenue: 110
+  - matchday: 2
+    date: '2022-01-08'
+    matches:
+    - match: Team 1 vs Team 6
+      field: Field 1
+      time_slot: 22:00-23:00
+      revenue: 110
+    - match: Team 2 vs Team 4
+      field: Field 2
+      time_slot: 09:00-10:00
+      revenue: 100
+    - match: Team 3 vs Team 5
+      field: Field 2
+      time_slot: 10:00-11:00
+      revenue: 110
+  - matchday: 3
+    date: '2022-01-15'
+    matches:
+    - match: Team 1 vs Team 4
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 100
+    - match: Team 3 vs Team 6
+      field: Field 1
+      time_slot: 22:00-23:00
+      revenue: 110
+    - match: Team 2 vs Team 5
+      field: Field 2
+      time_slot: 10:00-11:00
+      revenue: 110
+  - matchday: 4
+    date: '2022-01-22'
+    matches:
+    - match: Team 2 vs Team 3
+      field: Field 1
+      time_slot: 20:00-21:00
+      revenue: 100
+    - match: Team 1 vs Team 5
+      field: Field 1
+      time_slot: 22:00-23:00
+      revenue: 110
+    - match: Team 4 vs Team 6
+      field: Field 2
+      time_slot: 10:00-11:00
+      revenue: 110
+  - matchday: 5
+    date: '2022-01-29'
+    matches:
+    - match: Team 3 vs Team 4
+      field: Field 1
+      time_slot: 20:00-21:00
+      revenue: 100
+    - match: Team 5 vs Team 6
+      field: Field 2
+      time_slot: 09:00-10:00
+      revenue: 100
+    - match: Team 1 vs Team 2
+      field: Field 2
+      time_slot: 10:00-11:00
+      revenue: 110

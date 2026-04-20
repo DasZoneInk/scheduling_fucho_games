@@ -1,0 +1,59 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# scheduling_fucho_games — Input Configuration
+# Schema version: 1.0
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Tournament format: only "round_robin" is supported in v0.1
+format: "round_robin"
+
+# ── Teams ─────────────────────────────────────────────────────────────────────
+# Must be an even count (K) for round-robin without byes.
+# Produces K*(K-1)/2 matches across K-1 matchdays.
+teams:
+  - { id: 1, name: "Team 1" }
+  - { id: 2, name: "Team 2" }
+  - { id: 3, name: "Team 3" }
+  - { id: 4, name: "Team 4" }
+  - { id: 5, name: "Team 5" }
+  - { id: 6, name: "Team 6" }
+
+# ── Fields & venue-slots ──────────────────────────────────────────────────────
+# Each field defines available time-slots and their revenue contribution.
+# Revenue units are arbitrary (e.g., USD × 100 or index units).
+# At least K/2 venue-slots total are required to host simultaneous matches.
+fields:
+  - id: 1
+    name: "Field 1"
+    time_slots:
+      - { range: "20:00-21:00", revenue: 100 }   # format: HH:MM-HH:MM
+      - { range: "21:00-22:00", revenue: 100 }
+      - { range: "22:00-23:00", revenue: 110 }
+
+  - id: 2
+    name: "Field 2"
+    time_slots:
+      - { range: "08:00-09:00", revenue: 90 }
+      - { range: "09:00-10:00", revenue: 100 }
+      - { range: "10:00-11:00", revenue: 110 }
+
+# ── Constraints ───────────────────────────────────────────────────────────────
+constraints:
+
+  # Minimum calendar gap between consecutive matchdays (days).
+  # Default: 7 (one week apart).
+  min_matchday_gap_days: 7
+
+  inclusion:
+    start_date: "2022-01-01"         # YYYY-MM-DD — tournament window open
+    end_date: "2022-03-01"           # YYYY-MM-DD — tournament window close
+    days_available:                  # Weekdays on which matches may be held
+      - "Friday"
+      - "Saturday"
+      - "Sunday"
+
+  exclusion:
+    holidays: false                  # true → exclude official holidays
+    holiday_country: "MX"            # ISO 3166-1 alpha-2 country code
+    specific_dates: []               # List of YYYY-MM-DD strings to exclude
+    # specific_dates:
+    #   - "2022-02-14"               # Valentine's Day blockout

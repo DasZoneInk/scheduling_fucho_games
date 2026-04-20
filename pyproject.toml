@@ -1,0 +1,27 @@
+[project]
+name = "scheduling-fucho-games"
+version = "0.1.0"
+description = "ILP solver for football match scheduling via CP-SAT and Genetic Algorithms"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "deap>=1.4.4",
+    "ortools>=9.15.6755",
+    "pyyaml>=6.0",
+    "holidays>=0.46",
+    "ruff>=0.11.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["scheduling_fucho_games"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]

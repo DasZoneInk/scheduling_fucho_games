@@ -1,0 +1,11 @@
+[project]
+name = "scheduling-fucho-games"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "deap>=1.4.4",
+    "ortools>=9.15.6755",
+    "ruff>=0.15.11",
+]

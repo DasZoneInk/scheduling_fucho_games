@@ -40,7 +40,7 @@ _DEFAULT_POP_SIZE = 300
 _DEFAULT_N_GEN = 600
 _DEFAULT_CX_PB = 0.7
 _DEFAULT_MUT_PB = 0.2
-_DEFAULT_TOURNAMENT_K = 3
+_DEFAULT_TOURNAMENT_K = 7
 _PENALTY_MULTIPLIER = 100_000   # >> max possible revenue per match
 
 
@@ -157,6 +157,7 @@ def solve(
     n_gen: int = _DEFAULT_N_GEN,
     cx_pb: float = _DEFAULT_CX_PB,
     mut_pb: float = _DEFAULT_MUT_PB,
+    tournament_k: int = _DEFAULT_TOURNAMENT_K,
     seed: int = 42,
 ) -> SolverResult:
     """Run the GA on *problem* and return the best + second-best solutions.
@@ -167,6 +168,7 @@ def solve(
         n_gen:    Number of generations.
         cx_pb:    Crossover probability per pair.
         mut_pb:   Mutation probability per individual.
+        tournament_k: Selection pressure (tournament size).
         seed:     Random seed for reproducibility.
 
     Returns:
@@ -215,7 +217,7 @@ def solve(
         up=D * V - 1,
         indpb=max(0.05, 2.0 / M),
     )
-    toolbox.register("select", tools.selTournament, tournsize=_DEFAULT_TOURNAMENT_K)
+    toolbox.register("select", tools.selTournament, tournsize=tournament_k)
 
     hof = tools.HallOfFame(2)
     stats = tools.Statistics(key=lambda ind: ind.fitness.values[0])

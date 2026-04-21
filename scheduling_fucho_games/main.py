@@ -149,6 +149,24 @@ def _build_parser() -> argparse.ArgumentParser:
         help="GA random seed (default: 42, ignored for cpsat).",
     )
     p.add_argument(
+        "--cx-pb",
+        type=float,
+        default=0.7,
+        help="GA crossover probability (default: 0.7, range [0,1]).",
+    )
+    p.add_argument(
+        "--mut-pb",
+        type=float,
+        default=0.2,
+        help="GA individual mutation probability (default: 0.2, range [0,1]).",
+    )
+    p.add_argument(
+        "--tournament-k",
+        type=int,
+        default=7,
+        help="GA selection pressure / tournament size (default: 7).",
+    )
+    p.add_argument(
         "--log-level",
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
@@ -195,6 +213,9 @@ def cli_main(argv: list[str] | None = None) -> int:
                 problem,
                 pop_size=args.pop_size,
                 n_gen=args.generations,
+                cx_pb=args.cx_pb,
+                mut_pb=args.mut_pb,
+                tournament_k=args.tournament_k,
                 seed=args.seed,
             )
         else:

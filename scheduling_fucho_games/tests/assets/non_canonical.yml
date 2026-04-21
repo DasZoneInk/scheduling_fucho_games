@@ -1,0 +1,36 @@
+# non_canonical.yml — Deliberately malformed input to test error handling.
+#
+# Violations introduced:
+#   1. `constraints` is a YAML sequence (list of maps) instead of a plain mapping.
+#   2. `inclusion` block is missing `days_available`.
+#   3. `exclusion.specific_dates` contains an invalid date string.
+#   4. One team entry is missing the `name` key.
+#   5. A time-slot `range` uses an illegal separator (comma instead of dash).
+#
+# Expected: yml_loader.load_problem() raises ValueError before any solver runs.
+
+format: "round_robin"
+
+teams:
+  - { id: 1, name: "Team 1" }
+  - { id: 2, name: "Team 2" }
+  - { id: 3 }                       # ← VIOLATION 4: missing `name`
+  - { id: 4, name: "Team 4" }
+
+fields:
+  - id: 1
+    name: "Field 1"
+    time_slots:
+      - { range: "20:00,21:00", revenue: 100 }  # ← VIOLATION 5: comma separator
+
+# VIOLATION 1: constraints must be a plain mapping, not a list
+constraints:
+  - min_matchday_gap_days: 7
+  - inclusion:
+      start_date: "2022-01-01"
+      end_date: "2022-03-01"
+      # VIOLATION 2: days_available is absent
+    exclusion:
+      holidays: false
+      specific_dates:
+        - "NOT-A-DATE"               # ← VIOLATION 3

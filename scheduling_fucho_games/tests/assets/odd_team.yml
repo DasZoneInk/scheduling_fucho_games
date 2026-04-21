@@ -1,0 +1,31 @@
+# odd_team.yml — 5 teams (odd count); round-robin requires an even number.
+#
+# Expected: yml_loader.load_problem() raises ValueError with "even" in the message
+# before any date expansion or solver invocation occurs.
+
+format: "round_robin"
+
+teams:
+  - { id: 1, name: "Lions" }
+  - { id: 2, name: "Tigers" }
+  - { id: 3, name: "Bears" }
+  - { id: 4, name: "Wolves" }
+  - { id: 5, name: "Eagles" }       # ← 5th team makes count odd
+
+fields:
+  - id: 1
+    name: "Main Field"
+    time_slots:
+      - { range: "18:00-19:00", revenue: 90 }
+      - { range: "19:00-20:00", revenue: 100 }
+      - { range: "20:00-21:00", revenue: 110 }
+
+constraints:
+  min_matchday_gap_days: 7
+  inclusion:
+    start_date: "2022-01-01"
+    end_date:   "2022-06-30"
+    days_available: ["Saturday", "Sunday"]
+  exclusion:
+    holidays: false
+    specific_dates: []

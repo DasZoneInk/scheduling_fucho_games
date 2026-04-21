@@ -25,3 +25,16 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-timeout>=2.3",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["scheduling_fucho_games/tests"]
+addopts   = "-v --tb=short"
+markers   = [
+    "slow: long-running stress tests (deselect with -m 'not slow')",
+]

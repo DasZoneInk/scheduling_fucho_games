@@ -1,0 +1,41 @@
+# non_feasible_1.yml — Structurally infeasible: not enough calendar dates.
+#
+# Setup:
+#   6 teams → 5 matchdays required (K-1 = 5), gap ≥ 7 days.
+#   Window: 2022-01-03 to 2022-01-25  (22 calendar days).
+#   days_available: ["Monday"]
+#
+# Mondays in the window: Jan 3, 10, 17, 24  → 4 candidates.
+# With 7-day gap: can select at most 4 dates (Jan 3, 10, 17, 24).
+# But 5 matchdays are required → INFEASIBLE (4 < 5).
+#
+# Expected: yml_loader.load_problem() raises ValueError or InfeasibilityError
+# with a message explaining the date shortage.
+
+format: "round_robin"
+
+teams:
+  - { id: 1, name: "Red FC" }
+  - { id: 2, name: "Blue FC" }
+  - { id: 3, name: "Green FC" }
+  - { id: 4, name: "Yellow FC" }
+  - { id: 5, name: "Black FC" }
+  - { id: 6, name: "White FC" }
+
+fields:
+  - id: 1
+    name: "Stadium A"
+    time_slots:
+      - { range: "19:00-20:00", revenue: 100 }
+      - { range: "20:00-21:00", revenue: 110 }
+      - { range: "21:00-22:00", revenue: 105 }
+
+constraints:
+  min_matchday_gap_days: 7
+  inclusion:
+    start_date: "2022-01-03"        # narrow 22-day window
+    end_date:   "2022-01-25"
+    days_available: ["Monday"]      # only 4 Mondays available → need 5
+  exclusion:
+    holidays: false
+    specific_dates: []

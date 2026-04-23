@@ -18,7 +18,7 @@ from collections import defaultdict
 
 import pytest
 
-from scheduling_fucho_games.algorithms import cpsat, genetic_algorithm as ga
+from scheduling_fucho_games.algorithms import cpsat, genetic_algorithm as ga, kempe
 from scheduling_fucho_games.model import ScheduledMatch, SolverResult, TournamentProblem
 
 from .conftest import TournamentProblem  # for type annotation only
@@ -176,6 +176,40 @@ class TestGACorrectness:
         r2 = ga.solve(example_problem, pop_size=150, n_gen=200, seed=7)
         assert r1.best_revenue == r2.best_revenue
 
+# ── Kempe correctness (6-team canonical) ────────────────────────────────────────
+
+class TestKempeCorrectness:
+    def test_status_optimal(self, example_problem: TournamentProblem) -> None:
+        result = kempe.solve(example_problem, pop_size=300, n_gen=600, seed=42)
+        assert result.status == "OPTIMAL"
+
+    def test_best_revenue(self, example_problem: TournamentProblem) -> None:
+        result = kempe.solve(example_problem, pop_size=300, n_gen=600, seed=42)
+        assert result.best_revenue == 1_600
+
+    def test_best_solution_exists(self, example_problem: TournamentProblem) -> None:
+        result = kempe.solve(example_problem, pop_size=300, n_gen=600, seed=42)
+        assert result.best_solution is not None
+
+    def test_best_schedule_satisfies_constraints(self, example_problem: TournamentProblem) -> None:
+        result = kempe.solve(example_problem, pop_size=300, n_gen=600, seed=42)
+        assert result.best_solution is not None
+        _assert_schedule_valid(result.best_solution, example_problem)
+
+    def test_second_best_feasible_if_returned(self, example_problem: TournamentProblem) -> None:
+        result = kempe.solve(example_problem, pop_size=300, n_gen=600, seed=42)
+        if result.second_best_solution:
+            _assert_schedule_valid(result.second_best_solution, example_problem)
+
+    def test_solve_time_recorded(self, example_problem: TournamentProblem) -> None:
+        result = kempe.solve(example_problem, pop_size=300, n_gen=600, seed=42)
+        assert result.solve_time_s > 0.0
+
+    def test_reproducibility(self, example_problem: TournamentProblem) -> None:
+        """Same seed must produce identical revenue on repeated calls."""
+        r1 = kempe.solve(example_problem, pop_size=150, n_gen=200, seed=7)
+        r2 = kempe.solve(example_problem, pop_size=150, n_gen=200, seed=7)
+        assert r1.best_revenue == r2.best_revenue
 
 # ── Schedule invariant unit tests ─────────────────────────────────────────────
 

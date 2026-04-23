@@ -17,6 +17,11 @@ Evolution:
     Crossover : Two-point   (prob=0.7)
     Mutation  : Uniform int (prob=0.2 per individual, indpb=2/M per gene)
     Hall of Fame : size 2  (yields best + second-best)
+
+This spec is too complex for a tournament, we can select 2 genes: 
+first gene matchdays, second gene venue-slots
+This will construct feasible populations, with crossover and mutations plus proper selection we achieve fair enough results
+though the most optimal solution is not garanteed, we can achieve good solutions with low computational cost
 """
 
 from __future__ import annotations

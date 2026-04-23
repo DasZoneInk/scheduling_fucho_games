@@ -23,7 +23,7 @@ from .yml_loader import load_problem
 
 logger = logging.getLogger(__name__)
 
-SUPPORTED_ALGORITHMS = ("cpsat", "genetic")
+SUPPORTED_ALGORITHMS = ("cpsat", "genetic", "kempe")
 
 
 # ── Output serialisation ──────────────────────────────────────────────────────
@@ -132,14 +132,14 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--pop-size",
         type=int,
-        default=300,
+        default=200,
         dest="pop_size",
         help="GA population size (default: 300, ignored for cpsat).",
     )
     p.add_argument(
         "--generations",
         type=int,
-        default=600,
+        default=1500,
         help="GA number of generations (default: 600, ignored for cpsat).",
     )
     p.add_argument(
@@ -151,7 +151,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--cx-pb",
         type=float,
-        default=0.7,
+        default=0.8,
         help="GA crossover probability (default: 0.7, range [0,1]).",
     )
     p.add_argument(
@@ -159,6 +159,18 @@ def _build_parser() -> argparse.ArgumentParser:
         type=float,
         default=0.2,
         help="GA individual mutation probability (default: 0.2, range [0,1]).",
+    )
+    p.add_argument(
+        "--kempe-mut-pb",
+        type=float,
+        default=0.15,
+        help="Kempe chain mutation probability (default: 0.3, kempe only).",
+    )
+    p.add_argument(
+        "--venue-mut-pb",
+        type=float,
+        default=0.1,
+        help="Venue mutation probability (default: 0.3, kempe only).",
     )
     p.add_argument(
         "--tournament-k",
@@ -216,6 +228,18 @@ def cli_main(argv: list[str] | None = None) -> int:
                 cx_pb=args.cx_pb,
                 mut_pb=args.mut_pb,
                 tournament_k=args.tournament_k,
+                seed=args.seed,
+            )
+        elif args.algorithm == "kempe":
+            from .algorithms import kempe
+            result = kempe.solve(
+                problem,
+                pop_size=args.pop_size,
+                n_gen=args.generations,
+                cx_pb=args.cx_pb,
+                mut_pb=args.mut_pb,
+                kempe_mut_pb=args.kempe_mut_pb,
+                venue_mut_pb=args.venue_mut_pb,
                 seed=args.seed,
             )
         else:

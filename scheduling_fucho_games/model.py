@@ -108,6 +108,15 @@ class TournamentProblem:
     matchday_gap_days: int
     matches_per_matchday: int       # = K // 2
 
+    @property
+    def match_lookup(self) -> dict[tuple[int, int], Match]:
+        lookup = {}
+        for m in self.matches:
+            i, j = m.home.id, m.away.id
+            lookup[(i, j)] = m
+            lookup[(j, i)] = m
+        return lookup
+
     def validate(self) -> None:
         """Raises InfeasibilityError if the problem is structurally infeasible."""
         K = len(self.teams)

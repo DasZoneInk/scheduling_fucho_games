@@ -174,6 +174,32 @@ def generate_pairs_round_robin(teams: list[Any]) -> list[tuple[Any, Any]]:
     return list(combinations(teams, 2))
 
 
+def build_round_robin(teams: list[Any]) -> list[list[tuple[Any, Any]]]:
+    """Build a 1-factorization (list of matchdays) for round-robin."""
+    teams = list(teams)
+    n = len(teams)
+    assert n % 2 == 0
+
+    fixed = teams[-1]
+    others = teams[:-1]
+
+    D = n - 1
+    matchdays = []
+
+    for _ in range(D):
+        pairs = []
+        left = [fixed] + others[: (n // 2 - 1)]
+        right = others[(n // 2 - 1):][::-1]
+
+        for a, b in zip(left, right):
+            pairs.append((a, b))
+
+        matchdays.append(pairs)
+        others = [others[-1]] + others[:-1]
+
+    return matchdays
+
+
 def validate_team_count(teams: list[Any], fmt: str) -> None:
     """Raise ValueError if *teams* is incompatible with *fmt*.
 

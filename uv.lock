@@ -359,6 +359,7 @@ source = { editable = "." }
 dependencies = [
     { name = "deap" },
     { name = "holidays" },
+    { name = "numpy" },
     { name = "ortools" },
     { name = "pyyaml" },
     { name = "ruff" },
@@ -374,6 +375,7 @@ dev = [
 requires-dist = [
     { name = "deap", specifier = ">=1.4.4" },
     { name = "holidays", specifier = ">=0.46" },
+    { name = "numpy", specifier = ">=2.4.4" },
     { name = "ortools", specifier = ">=9.15.6755" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
     { name = "pytest-timeout", marker = "extra == 'dev'", specifier = ">=2.3" },

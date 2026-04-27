@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 # ── Supported tournament formats ──────────────────────────────────────────────
 SUPPORTED_FORMATS: Final[frozenset[str]] = frozenset({"round_robin"})
+BYE_TEAM_ID: Final[int] = -1
 
 
 # ── Custom exception ──────────────────────────────────────────────────────────
@@ -92,6 +93,7 @@ class SolverResult:
     second_best_revenue: int = 0
     solve_time_s: float = 0.0
     infeasibility_reason: str | None = None
+    bye_teams: dict[int, str] | None = None         # matchday → bye team name (odd-K only)
 
 
 # ── Problem definition ────────────────────────────────────────────────────────
@@ -107,6 +109,7 @@ class TournamentProblem:
     matchday_dates: list[date]      # length = K-1, pre-assigned calendar dates
     matchday_gap_days: int
     matches_per_matchday: int       # = K // 2
+    has_bye: bool = False           # True when odd-K was padded with BYE team
 
     @property
     def match_lookup(self) -> dict[tuple[int, int], Match]:
@@ -144,13 +147,18 @@ class TournamentProblem:
                 f"Match count mismatch: expected {expected_matches} for {K} teams, "
                 f"got {len(self.matches)}."
             )
-        logger.info(
-            "Problem validated ✓  format=%s  teams=%d  matches=%d  "
-            "matchdays=%d  venue_slots=%d  matches/matchday=%d",
-            self.format,
-            K,
-            len(self.matches),
-            n_matchdays,
-            len(self.venue_slots),
-            mpm,
-        )
+        if self.has_bye:
+            logger.info(
+                "Problem validated ✓  format=%s  teams=%d (incl. BYE)  "
+                "matches=%d  matchdays=%d  venue_slots=%d  matches/matchday=%d  "
+                "bye_mode=ON",
+                self.format, K, len(self.matches), n_matchdays,
+                len(self.venue_slots), mpm,
+            )
+        else:
+            logger.info(
+                "Problem validated ✓  format=%s  teams=%d  matches=%d  "
+                "matchdays=%d  venue_slots=%d  matches/matchday=%d",
+                self.format, K, len(self.matches), n_matchdays,
+                len(self.venue_slots), mpm,
+            )

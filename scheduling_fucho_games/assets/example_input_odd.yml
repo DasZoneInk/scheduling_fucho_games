@@ -1,0 +1,49 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# scheduling_fucho_games — Odd-K Input Configuration (5 teams → bye round)
+# Schema version: 1.0
+# ─────────────────────────────────────────────────────────────────────────────
+
+format: "round_robin"
+
+# ── Teams ─────────────────────────────────────────────────────────────────────
+# Odd count (5) — loader will inject a BYE phantom team automatically.
+# Produces 5 real matchdays; one team rests (bye) each day.
+teams:
+  - { id: 1, name: "Team 1" }
+  - { id: 2, name: "Team 2" }
+  - { id: 3, name: "Team 3" }
+  - { id: 4, name: "Team 4" }
+  - { id: 5, name: "Team 5" }
+
+# ── Fields & venue-slots ──────────────────────────────────────────────────────
+fields:
+  - id: 1
+    name: "Field 1"
+    time_slots:
+      - { range: "20:00-21:00", revenue: 100 }
+      - { range: "21:00-22:00", revenue: 100 }
+      - { range: "22:00-23:00", revenue: 110 }
+
+  - id: 2
+    name: "Field 2"
+    time_slots:
+      - { range: "08:00-09:00", revenue: 90 }
+      - { range: "09:00-10:00", revenue: 100 }
+      - { range: "10:00-11:00", revenue: 110 }
+
+# ── Constraints ───────────────────────────────────────────────────────────────
+constraints:
+  min_matchday_gap_days: 7
+
+  inclusion:
+    start_date: "2022-01-01"
+    end_date: "2022-03-01"
+    days_available:
+      - "Friday"
+      - "Saturday"
+      - "Sunday"
+
+  exclusion:
+    holidays: false
+    holiday_country: "MX"
+    specific_dates: []

@@ -35,6 +35,7 @@ from typing import Any
 import yaml
 
 from .model import (
+    BYE_TEAM_ID,
     SUPPORTED_FORMATS,
     InfeasibilityError,
     Match,
@@ -130,6 +131,16 @@ def load_problem(config_path: str | Path) -> TournamentProblem:
         teams.append(Team(id=tid, name=tname))
 
     validate_team_count(teams, fmt)
+
+    # ── Bye-round injection (odd K) ───────────────────────────────────────────
+    has_bye = False
+    if fmt == "round_robin" and len(teams) % 2 != 0:
+        logger.info(
+            "Odd team count (%d) → adding BYE team for bye-round scheduling.",
+            len(teams),
+        )
+        teams.append(Team(id=BYE_TEAM_ID, name="BYE"))
+        has_bye = True
 
     # ── Fields / VenueSlots ───────────────────────────────────────────────────
     raw_fields = _require(raw, "fields", "root")
@@ -255,6 +266,7 @@ def load_problem(config_path: str | Path) -> TournamentProblem:
         matchday_dates=matchday_dates,
         matchday_gap_days=gap_days,
         matches_per_matchday=K // 2,
+        has_bye=has_bye,
     )
     problem.validate()
     return problem

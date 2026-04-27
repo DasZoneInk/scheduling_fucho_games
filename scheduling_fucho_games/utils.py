@@ -175,10 +175,17 @@ def generate_pairs_round_robin(teams: list[Any]) -> list[tuple[Any, Any]]:
 
 
 def build_round_robin(teams: list[Any]) -> list[list[tuple[Any, Any]]]:
-    """Build a 1-factorization (list of matchdays) for round-robin."""
+    """Build a 1-factorization (list of matchdays) for round-robin.
+
+    Requires even cardinality; caller must pad with BYE if odd.
+    """
     teams = list(teams)
     n = len(teams)
-    assert n % 2 == 0
+    if n % 2 != 0:
+        raise ValueError(
+            f"build_round_robin requires even team count; got {n}. "
+            "Pad with BYE team before calling."
+        )
 
     fixed = teams[-1]
     others = teams[:-1]
@@ -203,12 +210,14 @@ def build_round_robin(teams: list[Any]) -> list[list[tuple[Any, Any]]]:
 def validate_team_count(teams: list[Any], fmt: str) -> None:
     """Raise ValueError if *teams* is incompatible with *fmt*.
 
-    Currently enforces even cardinality for round_robin (no bye support).
+    Odd cardinality for round_robin logs a warning; the caller is
+    responsible for injecting a BYE team to pad to even.
     """
     if len(teams) < 2:
         raise ValueError("At least 2 teams are required.")
     if fmt == "round_robin" and len(teams) % 2 != 0:
-        raise ValueError(
-            f"Round-robin requires an even number of teams; got {len(teams)}. "
-            "Add a bye team or use a format that supports odd counts."
+        logger.warning(
+            "Odd team count (%d) for round_robin — a BYE team will be "
+            "injected automatically.",
+            len(teams),
         )

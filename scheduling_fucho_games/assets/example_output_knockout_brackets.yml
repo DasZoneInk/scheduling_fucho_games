@@ -1,0 +1,202 @@
+algorithm: cpsat
+status: OPTIMAL
+solve_time_s: 0.0179
+infeasibility_reason: null
+best_solution:
+  total_revenue: 1780
+  schedule:
+  - matchday: 1
+    date: '2022-01-01'
+    round: Quarter-Final (Bracket A) (Legs 1-2)
+    matches:
+    - match: Eagles vs Vultures
+      field: Field 1
+      time_slot: 20:00-21:00
+      revenue: 120
+    - match: Owls vs Falcons
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+  - matchday: 2
+    date: '2022-01-08'
+    round: Quarter-Final (Bracket A) (Legs 1-2)
+    matches:
+    - match: Falcons vs Owls
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+    - match: Vultures vs Eagles
+      field: Field 2
+      time_slot: 21:00-22:00
+      revenue: 120
+  - matchday: 3
+    date: '2022-01-15'
+    round: Semi-Final (Bracket A) (Legs 1-2)
+    matches:
+    - match: W-QFA2 vs W-QFA1
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+  - matchday: 4
+    date: '2022-01-22'
+    round: Semi-Final (Bracket A) (Legs 1-2)
+    matches:
+    - match: W-QFA1 vs W-QFA2
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+  - matchday: 5
+    date: '2022-01-29'
+    round: Quarter-Final (Bracket B) (Legs 1-2)
+    matches:
+    - match: Hawks vs Kestrels
+      field: Field 1
+      time_slot: 20:00-21:00
+      revenue: 120
+    - match: Condors vs Ravens
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+  - matchday: 6
+    date: '2022-02-05'
+    round: Quarter-Final (Bracket B) (Legs 1-2)
+    matches:
+    - match: Kestrels vs Hawks
+      field: Field 1
+      time_slot: 20:00-21:00
+      revenue: 120
+    - match: Ravens vs Condors
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+  - matchday: 7
+    date: '2022-02-12'
+    round: Semi-Final (Bracket B) (Legs 1-2)
+    matches:
+    - match: W-QFB2 vs W-QFB1
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+  - matchday: 8
+    date: '2022-02-19'
+    round: Semi-Final (Bracket B) (Legs 1-2)
+    matches:
+    - match: W-QFB1 vs W-QFB2
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+  - matchday: 9
+    date: '2022-02-26'
+    round: Third Place
+    matches:
+    - match: L-SFA vs L-SFB
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+  - matchday: 10
+    date: '2022-03-05'
+    round: Final
+    matches:
+    - match: W-SFA1 vs W-SFB1
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+second_best_solution:
+  total_revenue: 1770
+  schedule:
+  - matchday: 1
+    date: '2022-01-01'
+    round: Quarter-Final (Bracket A) (Legs 1-2)
+    matches:
+    - match: Eagles vs Vultures
+      field: Field 1
+      time_slot: 20:00-21:00
+      revenue: 120
+    - match: Owls vs Falcons
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+  - matchday: 2
+    date: '2022-01-08'
+    round: Quarter-Final (Bracket A) (Legs 1-2)
+    matches:
+    - match: Falcons vs Owls
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+    - match: Vultures vs Eagles
+      field: Field 2
+      time_slot: 21:00-22:00
+      revenue: 120
+  - matchday: 3
+    date: '2022-01-15'
+    round: Semi-Final (Bracket A) (Legs 1-2)
+    matches:
+    - match: W-QFA2 vs W-QFA1
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+  - matchday: 4
+    date: '2022-01-22'
+    round: Semi-Final (Bracket A) (Legs 1-2)
+    matches:
+    - match: W-QFA1 vs W-QFA2
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+  - matchday: 5
+    date: '2022-01-29'
+    round: Quarter-Final (Bracket B) (Legs 1-2)
+    matches:
+    - match: Hawks vs Kestrels
+      field: Field 1
+      time_slot: 20:00-21:00
+      revenue: 120
+    - match: Condors vs Ravens
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+  - matchday: 6
+    date: '2022-02-05'
+    round: Quarter-Final (Bracket B) (Legs 1-2)
+    matches:
+    - match: Ravens vs Condors
+      field: Field 1
+      time_slot: 19:00-20:00
+      revenue: 110
+    - match: Kestrels vs Hawks
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+  - matchday: 7
+    date: '2022-02-12'
+    round: Semi-Final (Bracket B) (Legs 1-2)
+    matches:
+    - match: W-QFB2 vs W-QFB1
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+  - matchday: 8
+    date: '2022-02-19'
+    round: Semi-Final (Bracket B) (Legs 1-2)
+    matches:
+    - match: W-QFB1 vs W-QFB2
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+  - matchday: 9
+    date: '2022-02-26'
+    round: Third Place
+    matches:
+    - match: L-SFA vs L-SFB
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+  - matchday: 10
+    date: '2022-03-05'
+    round: Final
+    matches:
+    - match: W-SFA1 vs W-SFB1
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130

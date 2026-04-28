@@ -163,3 +163,15 @@ def build_odd_stress_problem(n_teams: int = 15, seed: int = 42) -> TournamentPro
 def odd_stress_problem() -> TournamentProblem:
     """15-team odd-K stress-test problem."""
     return build_odd_stress_problem(n_teams=15, seed=42)
+
+
+@pytest.fixture(scope="session")
+def knockout_problem() -> TournamentProblem:
+    """8-team knockout problem (non-bracket, top_vs_bottom seeding)."""
+    return load_problem(PKG_ASSETS / "example_input_knockout.yml")
+
+
+@pytest.fixture(scope="session")
+def knockout_brackets_problem() -> TournamentProblem:
+    """8-team knockout problem (2-bracket mode)."""
+    return load_problem(PKG_ASSETS / "example_input_knockout_brackets.yml")

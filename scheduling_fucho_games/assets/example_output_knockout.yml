@@ -1,0 +1,170 @@
+algorithm: cpsat
+status: OPTIMAL
+solve_time_s: 0.0208
+infeasibility_reason: null
+best_solution:
+  total_revenue: 1720
+  schedule:
+  - matchday: 1
+    date: '2022-01-01'
+    round: Quarter-Final (Legs 1-2)
+    matches:
+    - match: Hawks vs Vultures
+      field: Field 1
+      time_slot: 19:00-20:00
+      revenue: 110
+    - match: Owls vs Ravens
+      field: Field 1
+      time_slot: 20:00-21:00
+      revenue: 120
+    - match: Kestrels vs Eagles
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+    - match: Condors vs Falcons
+      field: Field 2
+      time_slot: 21:00-22:00
+      revenue: 120
+  - matchday: 2
+    date: '2022-01-08'
+    round: Quarter-Final (Legs 1-2)
+    matches:
+    - match: Vultures vs Hawks
+      field: Field 1
+      time_slot: 19:00-20:00
+      revenue: 110
+    - match: Eagles vs Kestrels
+      field: Field 1
+      time_slot: 20:00-21:00
+      revenue: 120
+    - match: Ravens vs Owls
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+    - match: Falcons vs Condors
+      field: Field 2
+      time_slot: 21:00-22:00
+      revenue: 120
+  - matchday: 3
+    date: '2022-01-15'
+    round: Semi-Final (Legs 1-2)
+    matches:
+    - match: W-QF1 vs W-QF4
+      field: Field 1
+      time_slot: 20:00-21:00
+      revenue: 120
+    - match: W-QF3 vs W-QF2
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+  - matchday: 4
+    date: '2022-01-22'
+    round: Semi-Final (Legs 1-2)
+    matches:
+    - match: W-QF2 vs W-QF3
+      field: Field 1
+      time_slot: 20:00-21:00
+      revenue: 120
+    - match: W-QF4 vs W-QF1
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+  - matchday: 5
+    date: '2022-01-29'
+    round: Final
+    matches:
+    - match: W-SF1 vs W-SF2
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+  - matchday: 6
+    date: '2022-02-05'
+    round: Third Place
+    matches:
+    - match: L-SF1 vs L-SF2
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+second_best_solution:
+  total_revenue: 1710
+  schedule:
+  - matchday: 1
+    date: '2022-01-01'
+    round: Quarter-Final (Legs 1-2)
+    matches:
+    - match: Owls vs Ravens
+      field: Field 1
+      time_slot: 20:00-21:00
+      revenue: 120
+    - match: Hawks vs Vultures
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+    - match: Falcons vs Condors
+      field: Field 2
+      time_slot: 20:00-21:00
+      revenue: 110
+    - match: Kestrels vs Eagles
+      field: Field 2
+      time_slot: 21:00-22:00
+      revenue: 120
+  - matchday: 2
+    date: '2022-01-08'
+    round: Quarter-Final (Legs 1-2)
+    matches:
+    - match: Eagles vs Kestrels
+      field: Field 1
+      time_slot: 20:00-21:00
+      revenue: 120
+    - match: Ravens vs Owls
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+    - match: Vultures vs Hawks
+      field: Field 2
+      time_slot: 20:00-21:00
+      revenue: 110
+    - match: Condors vs Falcons
+      field: Field 2
+      time_slot: 21:00-22:00
+      revenue: 120
+  - matchday: 3
+    date: '2022-01-15'
+    round: Semi-Final (Legs 1-2)
+    matches:
+    - match: W-QF1 vs W-QF4
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+    - match: W-QF3 vs W-QF2
+      field: Field 2
+      time_slot: 21:00-22:00
+      revenue: 120
+  - matchday: 4
+    date: '2022-01-22'
+    round: Semi-Final (Legs 1-2)
+    matches:
+    - match: W-QF2 vs W-QF3
+      field: Field 1
+      time_slot: 20:00-21:00
+      revenue: 120
+    - match: W-QF4 vs W-QF1
+      field: Field 2
+      time_slot: 21:00-22:00
+      revenue: 120
+  - matchday: 5
+    date: '2022-01-29'
+    round: Final
+    matches:
+    - match: W-SF1 vs W-SF2
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130
+  - matchday: 6
+    date: '2022-02-05'
+    round: Third Place
+    matches:
+    - match: L-SF1 vs L-SF2
+      field: Field 1
+      time_slot: 21:00-22:00
+      revenue: 130

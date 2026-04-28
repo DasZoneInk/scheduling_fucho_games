@@ -1,0 +1,60 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# scheduling_fucho_games — Knockout Input Configuration
+# 8-team single-elimination, 2-leg QF/SF, single-leg final, single 3rd-place
+# ─────────────────────────────────────────────────────────────────────────────
+
+format: "knockout"
+
+# ── Teams (power-of-2 required) ───────────────────────────────────────────────
+teams:
+  - { id: 1, name: "Eagles",   seed: 1 }
+  - { id: 2, name: "Hawks",    seed: 2 }
+  - { id: 3, name: "Falcons",  seed: 3 }
+  - { id: 4, name: "Ravens",   seed: 4 }
+  - { id: 5, name: "Owls",     seed: 5 }
+  - { id: 6, name: "Condors",  seed: 6 }
+  - { id: 7, name: "Vultures", seed: 7 }
+  - { id: 8, name: "Kestrels", seed: 8 }
+
+# ── Knockout configuration ────────────────────────────────────────────────────
+knockout:
+  default_legs: 2                  # 2-leg for QF and SF
+  final_legs: 1                    # single-leg final
+  third_place: "single"            # single 3rd-place match
+  brackets: false                  # single seeded pool
+  seeding: "top_vs_bottom"         # 1v8, 2v7, 3v6, 4v5
+
+# ── Fields & venue-slots ──────────────────────────────────────────────────────
+fields:
+  - id: 1
+    name: "Field 1"
+    time_slots:
+      - { range: "18:00-19:00", revenue: 100 }
+      - { range: "19:00-20:00", revenue: 110 }
+      - { range: "20:00-21:00", revenue: 120 }
+      - { range: "21:00-22:00", revenue: 130 }
+
+  - id: 2
+    name: "Field 2"
+    time_slots:
+      - { range: "18:00-19:00", revenue: 90 }
+      - { range: "19:00-20:00", revenue: 100 }
+      - { range: "20:00-21:00", revenue: 110 }
+      - { range: "21:00-22:00", revenue: 120 }
+
+# ── Constraints ───────────────────────────────────────────────────────────────
+constraints:
+  min_matchday_gap_days: 7
+
+  inclusion:
+    start_date: "2022-01-01"
+    end_date: "2022-06-30"
+    days_available:
+      - "Friday"
+      - "Saturday"
+      - "Sunday"
+
+  exclusion:
+    holidays: false
+    holiday_country: "MX"
+    specific_dates: []

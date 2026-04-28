@@ -15,8 +15,9 @@ from typing import Final
 logger = logging.getLogger(__name__)
 
 # ── Supported tournament formats ──────────────────────────────────────────────
-SUPPORTED_FORMATS: Final[frozenset[str]] = frozenset({"round_robin"})
+SUPPORTED_FORMATS: Final[frozenset[str]] = frozenset({"round_robin", "knockout"})
 BYE_TEAM_ID: Final[int] = -1
+PLACEHOLDER_ID_BASE: Final[int] = -100  # placeholder IDs: -100, -101, …
 
 
 # ── Custom exception ──────────────────────────────────────────────────────────
@@ -31,6 +32,7 @@ class InfeasibilityError(ValueError):
 class Team:
     id: int
     name: str
+    seed: int | None = None      # required for knockout, optional for round_robin
 
     def __repr__(self) -> str:
         return self.name
@@ -96,6 +98,29 @@ class SolverResult:
     bye_teams: dict[int, str] | None = None         # matchday → bye team name (odd-K only)
 
 
+# ── Knockout configuration ────────────────────────────────────────────────────
+
+@dataclass(frozen=True)
+class KnockoutConfig:
+    """Parsed knockout YAML block."""
+    default_legs: int                                  # 1 or 2
+    final_legs: int                                    # 1 or 2
+    third_place: str                                   # "none" | "single" | "double"
+    brackets: bool                                     # True → 2-bracket split
+    bracket_assignment: dict[str, list[int]] | None    # {"A": [seeds], "B": [seeds]}
+    seeding: str                                       # "top_vs_bottom" | "sequential"
+
+
+@dataclass(frozen=True)
+class KnockoutRound:
+    """One round of a knockout tournament."""
+    name: str                    # "QF", "SF", "3rd", "F"
+    round_index: int             # sequential ordering
+    legs: int                    # 1 or 2
+    match_ids: list[int]         # IDs of matches in this round (per leg)
+    matchday_indices: list[int]  # which matchday(s) this round maps to
+
+
 # ── Problem definition ────────────────────────────────────────────────────────
 
 @dataclass(frozen=True)
@@ -106,10 +131,15 @@ class TournamentProblem:
     teams: list[Team]
     matches: list[Match]
     venue_slots: list[VenueSlot]
-    matchday_dates: list[date]      # length = K-1, pre-assigned calendar dates
+    matchday_dates: list[date]      # pre-assigned calendar dates
     matchday_gap_days: int
-    matches_per_matchday: int       # = K // 2
+    matches_per_matchday: int       # = K // 2 for round_robin; max for knockout
     has_bye: bool = False           # True when odd-K was padded with BYE team
+
+    # ── Knockout-specific fields ──────────────────────────────────────────────
+    knockout_config: KnockoutConfig | None = None
+    knockout_rounds: list[KnockoutRound] | None = None
+    matches_per_matchday_map: dict[int, int] | None = None  # overrides flat mpm
 
     @property
     def match_lookup(self) -> dict[tuple[int, int], Match]:
@@ -121,7 +151,17 @@ class TournamentProblem:
         return lookup
 
     def validate(self) -> None:
-        """Raises InfeasibilityError if the problem is structurally infeasible."""
+        """Dispatch to format-specific validation."""
+        if self.format == "round_robin":
+            self._validate_round_robin()
+        elif self.format == "knockout":
+            self._validate_knockout()
+        else:
+            raise InfeasibilityError(f"Unknown format '{self.format}'.")
+
+    # ── Round-robin validation ────────────────────────────────────────────────
+
+    def _validate_round_robin(self) -> None:
         K = len(self.teams)
         n_matchdays = K - 1
         mpm = K // 2
@@ -162,3 +202,41 @@ class TournamentProblem:
                 self.format, K, len(self.matches), n_matchdays,
                 len(self.venue_slots), mpm,
             )
+
+    # ── Knockout validation ───────────────────────────────────────────────────
+
+    def _validate_knockout(self) -> None:
+        if self.knockout_config is None or self.knockout_rounds is None:
+            raise InfeasibilityError(
+                "Knockout format requires knockout_config and knockout_rounds."
+            )
+        if self.matches_per_matchday_map is None:
+            raise InfeasibilityError(
+                "Knockout format requires matches_per_matchday_map."
+            )
+
+        n_matchdays = len(self.matchday_dates)
+        max_mpm = max(self.matches_per_matchday_map.values())
+
+        if len(self.venue_slots) < max_mpm:
+            raise InfeasibilityError(
+                f"Structural infeasibility: only {len(self.venue_slots)} venue-slot(s), "
+                f"but {max_mpm} simultaneous matches required on peak matchday. "
+                "Add more fields or time-slots."
+            )
+
+        # Verify all matchday indices in rounds are within range
+        for rnd in self.knockout_rounds:
+            for md_idx in rnd.matchday_indices:
+                if md_idx >= n_matchdays:
+                    raise InfeasibilityError(
+                        f"Round '{rnd.name}' references matchday {md_idx} "
+                        f"but only {n_matchdays} matchday dates available."
+                    )
+
+        logger.info(
+            "Problem validated ✓  format=knockout  teams=%d  matches=%d  "
+            "matchdays=%d  rounds=%d  venue_slots=%d",
+            len(self.teams), len(self.matches), n_matchdays,
+            len(self.knockout_rounds), len(self.venue_slots),
+        )

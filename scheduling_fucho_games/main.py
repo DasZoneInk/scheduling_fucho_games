@@ -31,6 +31,7 @@ SUPPORTED_ALGORITHMS = ("cpsat", "genetic", "kempe")
 def _serialise_schedule(
     schedule: list[ScheduledMatch] | None,
     bye_teams: dict[int, str] | None = None,
+    round_name_map: dict[int, str] | None = None,
 ) -> Any:
     """Convert a schedule to a YAML-serialisable dict."""
     if not schedule:
@@ -49,19 +50,21 @@ def _serialise_schedule(
         day_dict: dict[str, Any] = {
             "matchday": d_idx + 1,
             "date": str(matches_in_day[0].matchday_date),
-            "matches": [
-                {
-                    "match": sm.match.label(),
-                    "field": sm.venue_slot.field_name,
-                    "time_slot": (
-                        f"{sm.venue_slot.slot_start.strftime('%H:%M')}"
-                        f"-{sm.venue_slot.slot_end.strftime('%H:%M')}"
-                    ),
-                    "revenue": sm.venue_slot.revenue,
-                }
-                for sm in matches_in_day
-            ],
         }
+        if round_name_map and d_idx in round_name_map:
+            day_dict["round"] = round_name_map[d_idx]
+        day_dict["matches"] = [
+            {
+                "match": sm.match.label(),
+                "field": sm.venue_slot.field_name,
+                "time_slot": (
+                    f"{sm.venue_slot.slot_start.strftime('%H:%M')}"
+                    f"-{sm.venue_slot.slot_end.strftime('%H:%M')}"
+                ),
+                "revenue": sm.venue_slot.revenue,
+            }
+            for sm in matches_in_day
+        ]
         if bye_teams and d_idx in bye_teams:
             day_dict["bye_team"] = bye_teams[d_idx]
         matchdays_out.append(day_dict)
@@ -93,6 +96,7 @@ def _strip_bye_matches(
 def _build_output(
     algorithm: str,
     result: SolverResult,
+    round_name_map: dict[int, str] | None = None,
 ) -> dict[str, Any]:
     out: dict[str, Any] = {
         "algorithm": algorithm,
@@ -101,13 +105,17 @@ def _build_output(
         "infeasibility_reason": result.infeasibility_reason,
         "best_solution": {
             "total_revenue": result.best_revenue,
-            "schedule": _serialise_schedule(result.best_solution, result.bye_teams),
+            "schedule": _serialise_schedule(
+                result.best_solution, result.bye_teams, round_name_map,
+            ),
         }
         if result.best_solution
         else None,
         "second_best_solution": {
             "total_revenue": result.second_best_revenue,
-            "schedule": _serialise_schedule(result.second_best_solution, result.bye_teams),
+            "schedule": _serialise_schedule(
+                result.second_best_solution, result.bye_teams, round_name_map,
+            ),
         }
         if result.second_best_solution
         else None,
@@ -241,6 +249,14 @@ def cli_main(argv: list[str] | None = None) -> int:
         return 1
 
     # ── Dispatch solver ───────────────────────────────────────────────────────
+    # Knockout only supports CP-SAT
+    if problem.format == "knockout" and args.algorithm != "cpsat":
+        logger.error(
+            "Knockout format only supports the 'cpsat' algorithm; got '%s'.",
+            args.algorithm,
+        )
+        return 1
+
     result: SolverResult
     try:
         if args.algorithm == "cpsat":
@@ -297,10 +313,18 @@ def cli_main(argv: list[str] | None = None) -> int:
         if second_clean:
             result.second_best_revenue = sum(sm.venue_slot.revenue for sm in second_clean)
 
+    # ── Build round labels (knockout) ───────────────────────────────────────────
+    round_name_map: dict[int, str] | None = None
+    if problem.format == "knockout" and problem.knockout_rounds:
+        round_name_map = {}
+        for rnd in problem.knockout_rounds:
+            for md_idx in rnd.matchday_indices:
+                round_name_map[md_idx] = rnd.name
+
     # ── Write output ──────────────────────────────────────────────────────────
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_data = _build_output(args.algorithm, result)
+    output_data = _build_output(args.algorithm, result, round_name_map)
 
     try:
         with output_path.open("w", encoding="utf-8") as fh:

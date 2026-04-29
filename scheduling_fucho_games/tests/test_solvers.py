@@ -19,7 +19,12 @@ from collections import defaultdict
 import pytest
 
 from scheduling_fucho_games.algorithms import cpsat, genetic_algorithm as ga, kempe
-from scheduling_fucho_games.model import ScheduledMatch, SolverResult, TournamentProblem
+from scheduling_fucho_games.model import (
+    BYE_TEAM_ID,
+    ScheduledMatch,
+    SolverResult,
+    TournamentProblem,
+)
 
 from .conftest import TournamentProblem  # for type annotation only
 
@@ -32,24 +37,37 @@ GA_STRESS_GENS: int = 400
 
 # ── Schedule validity helper ──────────────────────────────────────────────────
 
-def _assert_schedule_valid(schedule: list[ScheduledMatch], problem: TournamentProblem) -> None:
+def _assert_schedule_valid(
+    schedule: list[ScheduledMatch],
+    problem: TournamentProblem,
+    *,
+    stripped: bool = False,
+) -> None:
     """Assert all hard constraints are satisfied in *schedule*.
 
-    Checks:
-        1. Every match appears exactly once.
-        2. Each team plays exactly once per matchday.
-        3. No (matchday, venue-slot) pair appears more than once.
-        4. Correct number of matches per matchday (= K/2).
-        5. All matchday_date values are from the pre-assigned calendar.
+    When *stripped* is True the schedule has already had BYE matches removed
+    (odd-K post-processing), so match counts per matchday are K_orig//2
+    (i.e. (K-1)//2 where K is the padded even count).
     """
     K = len(problem.teams)
     n_matchdays = K - 1
-    mpm = K // 2
+
+    if stripped and problem.has_bye:
+        # After BYE stripping: real matches per matchday = (K-2)//2
+        mpm = (K - 1) // 2
+        # Exclude BYE matches from expected IDs
+        expected_ids = {
+            m.id for m in problem.matches
+            if m.home.id != BYE_TEAM_ID and m.away.id != BYE_TEAM_ID
+        }
+    else:
+        mpm = K // 2
+        expected_ids = {m.id for m in problem.matches}
+
     valid_dates = set(problem.matchday_dates)
 
     # 1 — Match coverage
     scheduled_match_ids = [sm.match.id for sm in schedule]
-    expected_ids = {m.id for m in problem.matches}
     missing = expected_ids - set(scheduled_match_ids)
     duplicates = {mid for mid in scheduled_match_ids if scheduled_match_ids.count(mid) > 1}
     assert not missing, f"Unscheduled match IDs: {missing}"
@@ -210,6 +228,109 @@ class TestKempeCorrectness:
         r1 = kempe.solve(example_problem, pop_size=150, n_gen=200, seed=7)
         r2 = kempe.solve(example_problem, pop_size=150, n_gen=200, seed=7)
         assert r1.best_revenue == r2.best_revenue
+
+
+# ── Odd-K CP-SAT (5-team with bye) ───────────────────────────────────────────
+
+def _strip_bye(schedule, problem):
+    """Test helper — mimics main._strip_bye_matches."""
+    bye_teams: dict[int, str] = {}
+    cleaned: list[ScheduledMatch] = []
+    for sm in schedule:
+        home, away = sm.match.home, sm.match.away
+        if home.id == BYE_TEAM_ID:
+            bye_teams[sm.matchday] = away.name
+        elif away.id == BYE_TEAM_ID:
+            bye_teams[sm.matchday] = home.name
+        else:
+            cleaned.append(sm)
+    return cleaned, bye_teams
+
+
+class TestOddTeamCPSAT:
+    """5-team odd-K with BYE injection, solved by CP-SAT."""
+
+    def test_has_bye_flag(self, odd_example_problem: TournamentProblem) -> None:
+        assert odd_example_problem.has_bye is True
+
+    def test_status_optimal(self, odd_example_problem: TournamentProblem) -> None:
+        result = cpsat.solve(odd_example_problem, timeout_s=30.0)
+        assert result.status == "OPTIMAL"
+
+    def test_full_schedule_valid(self, odd_example_problem: TournamentProblem) -> None:
+        """Before BYE stripping — raw solver output passes even-K invariants."""
+        result = cpsat.solve(odd_example_problem, timeout_s=30.0)
+        assert result.best_solution is not None
+        _assert_schedule_valid(result.best_solution, odd_example_problem)
+
+    def test_stripped_schedule_valid(self, odd_example_problem: TournamentProblem) -> None:
+        """After BYE stripping — real matches pass odd-K invariants."""
+        result = cpsat.solve(odd_example_problem, timeout_s=30.0)
+        assert result.best_solution is not None
+        cleaned, bye_map = _strip_bye(result.best_solution, odd_example_problem)
+        assert cleaned is not None
+        _assert_schedule_valid(cleaned, odd_example_problem, stripped=True)
+
+    def test_one_bye_per_matchday(self, odd_example_problem: TournamentProblem) -> None:
+        result = cpsat.solve(odd_example_problem, timeout_s=30.0)
+        assert result.best_solution is not None
+        _, bye_map = _strip_bye(result.best_solution, odd_example_problem)
+        K = len(odd_example_problem.teams)
+        assert len(bye_map) == K - 1, (
+            f"Expected {K-1} bye entries (one per matchday); got {len(bye_map)}"
+        )
+
+    def test_every_real_team_gets_one_bye(self, odd_example_problem: TournamentProblem) -> None:
+        result = cpsat.solve(odd_example_problem, timeout_s=30.0)
+        assert result.best_solution is not None
+        _, bye_map = _strip_bye(result.best_solution, odd_example_problem)
+        real_team_names = {
+            t.name for t in odd_example_problem.teams if t.id != BYE_TEAM_ID
+        }
+        bye_team_names = set(bye_map.values())
+        assert bye_team_names == real_team_names, (
+            f"Not every team got a bye. Missing: {real_team_names - bye_team_names}"
+        )
+
+
+class TestOddTeamKempe:
+    """5-team odd-K with BYE injection, solved by Kempe."""
+
+    def test_has_bye_flag(self, odd_example_problem: TournamentProblem) -> None:
+        assert odd_example_problem.has_bye is True
+
+    def test_status_optimal(self, odd_example_problem: TournamentProblem) -> None:
+        result = kempe.solve(odd_example_problem, pop_size=200, n_gen=500, seed=42)
+        assert result.status == "OPTIMAL"
+
+    def test_full_schedule_valid(self, odd_example_problem: TournamentProblem) -> None:
+        result = kempe.solve(odd_example_problem, pop_size=200, n_gen=500, seed=42)
+        assert result.best_solution is not None
+        _assert_schedule_valid(result.best_solution, odd_example_problem)
+
+    def test_stripped_schedule_valid(self, odd_example_problem: TournamentProblem) -> None:
+        result = kempe.solve(odd_example_problem, pop_size=200, n_gen=500, seed=42)
+        assert result.best_solution is not None
+        cleaned, _ = _strip_bye(result.best_solution, odd_example_problem)
+        assert cleaned is not None
+        _assert_schedule_valid(cleaned, odd_example_problem, stripped=True)
+
+    def test_one_bye_per_matchday(self, odd_example_problem: TournamentProblem) -> None:
+        result = kempe.solve(odd_example_problem, pop_size=200, n_gen=500, seed=42)
+        assert result.best_solution is not None
+        _, bye_map = _strip_bye(result.best_solution, odd_example_problem)
+        K = len(odd_example_problem.teams)
+        assert len(bye_map) == K - 1
+
+    def test_every_real_team_gets_one_bye(self, odd_example_problem: TournamentProblem) -> None:
+        result = kempe.solve(odd_example_problem, pop_size=200, n_gen=500, seed=42)
+        assert result.best_solution is not None
+        _, bye_map = _strip_bye(result.best_solution, odd_example_problem)
+        real_team_names = {
+            t.name for t in odd_example_problem.teams if t.id != BYE_TEAM_ID
+        }
+        bye_team_names = set(bye_map.values())
+        assert bye_team_names == real_team_names
 
 # ── Schedule invariant unit tests ─────────────────────────────────────────────
 

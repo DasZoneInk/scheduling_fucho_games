@@ -35,8 +35,10 @@ from typing import Any
 import yaml
 
 from .model import (
+    BYE_TEAM_ID,
     SUPPORTED_FORMATS,
     InfeasibilityError,
+    KnockoutConfig,
     Match,
     Team,
     TournamentProblem,
@@ -44,6 +46,7 @@ from .model import (
 )
 from .utils import (
     assign_matchday_dates,
+    generate_knockout_bracket,
     generate_pairs_round_robin,
     get_feasible_dates,
     get_holidays,
@@ -127,9 +130,23 @@ def load_problem(config_path: str | Path) -> TournamentProblem:
         if tid in seen_ids:
             raise ValueError(f"Duplicate team id {tid} at teams[{i}].")
         seen_ids.add(tid)
-        teams.append(Team(id=tid, name=tname))
+
+        # Seed: required for knockout, optional for round_robin
+        raw_seed = t.get("seed")
+        seed = int(raw_seed) if raw_seed is not None else None
+        teams.append(Team(id=tid, name=tname, seed=seed))
 
     validate_team_count(teams, fmt)
+
+    # ── Bye-round injection (odd K) ───────────────────────────────────────────
+    has_bye = False
+    if fmt == "round_robin" and len(teams) % 2 != 0:
+        logger.info(
+            "Odd team count (%d) → adding BYE team for bye-round scheduling.",
+            len(teams),
+        )
+        teams.append(Team(id=BYE_TEAM_ID, name="BYE"))
+        has_bye = True
 
     # ── Fields / VenueSlots ───────────────────────────────────────────────────
     raw_fields = _require(raw, "fields", "root")
@@ -238,23 +255,114 @@ def load_problem(config_path: str | Path) -> TournamentProblem:
 
     # ── Date expansion ────────────────────────────────────────────────────────
     feasible_dates = get_feasible_dates(start_date, end_date, raw_days, excluded)
-    K = len(teams)
-    n_matchdays = K - 1
-    matchday_dates = assign_matchday_dates(feasible_dates, n_matchdays, gap_days)
 
-    # ── Match generation ──────────────────────────────────────────────────────
-    pairs = generate_pairs_round_robin(teams)
-    matches = [Match(id=i, home=h, away=a) for i, (h, a) in enumerate(pairs)]
+    # ── Format-specific match generation & assembly ──────────────────────────
 
-    # ── Assemble and validate ─────────────────────────────────────────────────
-    problem = TournamentProblem(
-        format=fmt,
-        teams=teams,
-        matches=matches,
-        venue_slots=venue_slots,
-        matchday_dates=matchday_dates,
-        matchday_gap_days=gap_days,
-        matches_per_matchday=K // 2,
-    )
+    if fmt == "round_robin":
+        K = len(teams)
+        n_matchdays = K - 1
+        matchday_dates = assign_matchday_dates(feasible_dates, n_matchdays, gap_days)
+
+        pairs = generate_pairs_round_robin(teams)
+        matches = [Match(id=i, home=h, away=a) for i, (h, a) in enumerate(pairs)]
+
+        problem = TournamentProblem(
+            format=fmt,
+            teams=teams,
+            matches=matches,
+            venue_slots=venue_slots,
+            matchday_dates=matchday_dates,
+            matchday_gap_days=gap_days,
+            matches_per_matchday=K // 2,
+            has_bye=has_bye,
+        )
+
+    elif fmt == "knockout":
+        # ── Validate seeds ───────────────────────────────────────────────────
+        for t in teams:
+            if t.seed is None:
+                raise ValueError(
+                    f"Team '{t.name}' (id={t.id}) missing 'seed' — "
+                    "required for knockout format."
+                )
+        seeds = [t.seed for t in teams]
+        if len(set(seeds)) != len(seeds):
+            raise ValueError("Duplicate seed values found in teams.")
+
+        # ── Parse knockout block ────────────────────────────────────────────
+        raw_ko = _require(raw, "knockout", "root")
+        if not isinstance(raw_ko, dict):
+            raise ValueError("'knockout' must be a mapping.")
+
+        default_legs = int(raw_ko.get("default_legs", 2))
+        final_legs = int(raw_ko.get("final_legs", 1))
+        third_place = str(raw_ko.get("third_place", "none")).strip().lower()
+        brackets_enabled = bool(raw_ko.get("brackets", False))
+        seeding = str(raw_ko.get("seeding", "top_vs_bottom")).strip().lower()
+
+        if default_legs not in (1, 2):
+            raise ValueError(f"default_legs must be 1 or 2; got {default_legs}.")
+        if final_legs not in (1, 2):
+            raise ValueError(f"final_legs must be 1 or 2; got {final_legs}.")
+        if third_place not in ("none", "single", "double"):
+            raise ValueError(
+                f"third_place must be 'none', 'single', or 'double'; got '{third_place}'."
+            )
+        if seeding not in ("top_vs_bottom", "sequential"):
+            raise ValueError(
+                f"seeding must be 'top_vs_bottom' or 'sequential'; got '{seeding}'."
+            )
+
+        bracket_assignment: dict[str, list[int]] | None = None
+        if brackets_enabled:
+            raw_ba = _require(raw_ko, "bracket_assignment", "knockout")
+            if not isinstance(raw_ba, dict):
+                raise ValueError("'bracket_assignment' must be a mapping.")
+            ba_a = [int(s) for s in _require(raw_ba, "A", "bracket_assignment")]
+            ba_b = [int(s) for s in _require(raw_ba, "B", "bracket_assignment")]
+            if len(ba_a) != len(ba_b):
+                raise ValueError(
+                    f"Bracket sizes must be equal; A={len(ba_a)}, B={len(ba_b)}."
+                )
+            all_seeds = set(ba_a) | set(ba_b)
+            if all_seeds != set(seeds):
+                raise ValueError(
+                    "bracket_assignment must cover all team seeds exactly once."
+                )
+            bracket_assignment = {"A": ba_a, "B": ba_b}
+
+        ko_config = KnockoutConfig(
+            default_legs=default_legs,
+            final_legs=final_legs,
+            third_place=third_place,
+            brackets=brackets_enabled,
+            bracket_assignment=bracket_assignment,
+            seeding=seeding,
+        )
+
+        # ── Generate bracket ───────────────────────────────────────────────
+        all_teams, matches, ko_rounds, mpm_map = generate_knockout_bracket(
+            teams, ko_config
+        )
+
+        n_matchdays = max(mpm_map.keys()) + 1
+        matchday_dates = assign_matchday_dates(feasible_dates, n_matchdays, gap_days)
+        max_mpm = max(mpm_map.values())
+
+        problem = TournamentProblem(
+            format=fmt,
+            teams=all_teams,
+            matches=matches,
+            venue_slots=venue_slots,
+            matchday_dates=matchday_dates,
+            matchday_gap_days=gap_days,
+            matches_per_matchday=max_mpm,
+            knockout_config=ko_config,
+            knockout_rounds=ko_rounds,
+            matches_per_matchday_map=mpm_map,
+        )
+    else:
+        raise ValueError(f"Unsupported format '{fmt}'.")
+
     problem.validate()
     return problem

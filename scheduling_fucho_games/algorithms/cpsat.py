@@ -115,28 +115,76 @@ def solve(problem: TournamentProblem, timeout_s: float = 60.0) -> SolverResult:
         for v in range(V)
     }
 
+    # ── Pre-compute knockout match-to-matchday mapping ─────────────────────────
+    # For knockout: matches are pre-assigned to specific matchdays by round.
+    # Build a set of allowed matchdays per match for knockout; None = any day.
+    ko_match_days: dict[int, set[int]] | None = None
+    if problem.format == "knockout" and problem.knockout_rounds:
+        ko_match_days = {}
+        for rnd in problem.knockout_rounds:
+            for mid in rnd.match_ids:
+                ko_match_days[mid] = set(rnd.matchday_indices)
+
+    # Build team → set of matchdays where team is expected to play
+    team_expected_days: dict[int, set[int]] = {}
+    if problem.format == "knockout" and problem.knockout_rounds:
+        for rnd in problem.knockout_rounds:
+            for mid in rnd.match_ids:
+                match_obj = problem.matches[mid]
+                for t in (match_obj.home, match_obj.away):
+                    if t.id not in team_expected_days:
+                        team_expected_days[t.id] = set()
+                    team_expected_days[t.id].update(rnd.matchday_indices)
+
     # C1 — each match scheduled exactly once
     for m in range(M):
         model.add(sum(x[m, d, v] for d in range(D) for v in range(V)) == 1)
 
-    # C2 — each team plays exactly once per matchday
+    # C1b — Knockout round ordering: restrict matches to their assigned matchdays
+    if ko_match_days:
+        for m_idx in range(M):
+            allowed = ko_match_days.get(m_idx)
+            if allowed is not None:
+                for d in range(D):
+                    if d not in allowed:
+                        for v in range(V):
+                            model.add(x[m_idx, d, v] == 0)
+
+    # C2 — team plays exactly once per matchday (round_robin) or at most once (knockout)
     for d in range(D):
         for team in problem.teams:
             team_match_idxs = [
                 m for m, match in enumerate(problem.matches) if match.involves(team)
             ]
-            model.add(
-                sum(x[m, d, v] for m in team_match_idxs for v in range(V)) == 1
-            )
+            if not team_match_idxs:
+                continue
+
+            if problem.format == "knockout":
+                expected = team_expected_days.get(team.id, set())
+                if d in expected:
+                    model.add(
+                        sum(x[m, d, v] for m in team_match_idxs for v in range(V)) <= 1
+                    )
+                else:
+                    # Team has no matches on this day
+                    model.add(
+                        sum(x[m, d, v] for m in team_match_idxs for v in range(V)) == 0
+                    )
+            else:
+                model.add(
+                    sum(x[m, d, v] for m in team_match_idxs for v in range(V)) == 1
+                )
 
     # C3 — no venue-slot double-booked on the same matchday
     for d in range(D):
         for v in range(V):
             model.add(sum(x[m, d, v] for m in range(M)) <= 1)
 
-    # C4 — exactly mpm matches per matchday
+    # C4 — correct number of matches per matchday
+    mpm_map = problem.matches_per_matchday_map
     for d in range(D):
-        model.add(sum(x[m, d, v] for m in range(M) for v in range(V)) == mpm)
+        day_mpm = mpm_map[d] if mpm_map else mpm
+        model.add(sum(x[m, d, v] for m in range(M) for v in range(V)) == day_mpm)
 
     # ── Objective ─────────────────────────────────────────────────────────────
     revenues = [vs.revenue for vs in problem.venue_slots]

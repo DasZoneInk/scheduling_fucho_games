@@ -19,7 +19,7 @@ from typing import Any
 import yaml
 
 from .model import BYE_TEAM_ID, InfeasibilityError, ScheduledMatch, SolverResult
-from .yml_loader import load_problem
+from .yml_loader import load_problem, load_problem_from_dict
 
 logger = logging.getLogger(__name__)
 
@@ -122,6 +122,65 @@ def _build_output(
     }
     return out
 
+def solve_from_dict(payload: dict[str, Any], algorithm: str = "cpsat", **kwargs) -> dict[str, Any]:
+    """Programmatic API to load problem from a dictionary and solve."""
+    try:
+        problem = load_problem_from_dict(payload)
+    except (ValueError, InfeasibilityError) as exc:
+        raise ValueError(f"Problem configuration error: {exc}") from exc
+
+    if problem.format == "knockout" and algorithm != "cpsat":
+        raise ValueError(f"Knockout format only supports the 'cpsat' algorithm; got '{algorithm}'.")
+
+    if algorithm == "cpsat":
+        from .algorithms import cpsat
+        result = cpsat.solve(problem, timeout_s=kwargs.get("timeout", 60.0))
+    elif algorithm == "genetic":
+        from .algorithms import genetic_algorithm as ga
+        result = ga.solve(
+            problem,
+            pop_size=kwargs.get("pop_size", 200),
+            n_gen=kwargs.get("generations", 1500),
+            cx_pb=kwargs.get("cx_pb", 0.8),
+            mut_pb=kwargs.get("mut_pb", 0.2),
+            tournament_k=kwargs.get("tournament_k", 7),
+            seed=kwargs.get("seed", 42),
+        )
+    elif algorithm == "kempe":
+        from .algorithms import kempe
+        result = kempe.solve(
+            problem,
+            pop_size=kwargs.get("pop_size", 200),
+            n_gen=kwargs.get("generations", 1500),
+            cx_pb=kwargs.get("cx_pb", 0.8),
+            mut_pb=kwargs.get("mut_pb", 0.2),
+            kempe_mut_pb=kwargs.get("kempe_mut_pb", 0.15),
+            venue_mut_pb=kwargs.get("venue_mut_pb", 0.1),
+            seed=kwargs.get("seed", 42),
+        )
+    else:
+        raise ValueError(f"Unknown algorithm '{algorithm}'. Supported: {SUPPORTED_ALGORITHMS}")
+
+    if problem.has_bye:
+        best_clean, bye_map = _strip_bye_matches(result.best_solution)
+        result.best_solution = best_clean
+        result.bye_teams = bye_map
+        if best_clean:
+            result.best_revenue = sum(sm.venue_slot.revenue for sm in best_clean)
+
+        second_clean, _ = _strip_bye_matches(result.second_best_solution)
+        result.second_best_solution = second_clean
+        if second_clean:
+            result.second_best_revenue = sum(sm.venue_slot.revenue for sm in second_clean)
+
+    round_name_map: dict[int, str] | None = None
+    if problem.format == "knockout" and problem.knockout_rounds:
+        round_name_map = {}
+        for rnd in problem.knockout_rounds:
+            for md_idx in rnd.matchday_indices:
+                round_name_map[md_idx] = rnd.name
+
+    return _build_output(algorithm, result, round_name_map)
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
 

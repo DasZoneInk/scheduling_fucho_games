@@ -97,6 +97,10 @@ def load_problem(config_path: str | Path) -> TournamentProblem:
         except yaml.YAMLError as exc:
             raise ValueError(f"YAML parse error in '{path}': {exc}") from exc
 
+    return load_problem_from_dict(raw)
+
+def load_problem_from_dict(raw: dict[str, Any]) -> TournamentProblem:
+    """Parse dictionary input and return a validated :class:`TournamentProblem`."""
     if not isinstance(raw, dict):
         raise ValueError(
             f"Config root must be a YAML mapping; got {type(raw).__name__}."
